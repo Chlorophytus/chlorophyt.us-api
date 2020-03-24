@@ -1,0 +1,19 @@
+# Created by https://www.gitignore.io/api/erlang
+# Edit at https://www.gitignore.io/?templates=erlang
+
+### Erlang ###
+.eunit
+deps
+*.o
+*.beam
+*.plt
+erl_crash.dump
+ebin/*.beam
+rel/chlorophytus_api
+.concrete/DEV_MODE
+.rebar
+
+# End of https://www.gitignore.io/api/erlang
+
+# Security
+priv
