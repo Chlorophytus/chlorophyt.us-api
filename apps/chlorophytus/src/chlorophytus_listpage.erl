@@ -35,10 +35,11 @@ content_types_provided(Req, State) ->
 to_json(Req, [#{t0 := T0}] = State) ->
     Span = chlorophytus_date:get_span(null,
 				      chlorophytus_date:now(), T0),
+    T =
+	iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span)),
     {mochijson2:encode([{<<"text">>,
 			 <<"this does nothing">>},
-			{<<"time">>,
-			 chlorophytus_date:stringify_to_iolist(Span)}]),
+			{<<"time">>, T}]),
      Req, State}.
 
 to_text(Req, [#{t0 := T0}] = State) ->
@@ -46,6 +47,6 @@ to_text(Req, [#{t0 := T0}] = State) ->
 				      chlorophytus_date:now(), T0),
     T =
 	iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span)),
-    {<<"this lister does nothing. time: ", T/binary,
+    {<<"[ ","null"," ]\r\ntime: ", T/binary,
        "\r\n">>,
      Req, State}.

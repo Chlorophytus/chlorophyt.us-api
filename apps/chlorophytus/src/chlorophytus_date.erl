@@ -1,7 +1,10 @@
 %%%-------------------------------------------------------------------
 %% @doc chlorophytus date system
-%%      this was for another personal site I was working on in the
+%%
+%%      this was from another personal site I was working on in the
 %%      past
+%%
+%%		the licenses are compatible
 %% @end
 %%%-------------------------------------------------------------------
 -module(chlorophytus_date).
