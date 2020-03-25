@@ -1,8 +1,8 @@
 %%%-------------------------------------------------------------------
-%% @doc chlorophytus element page handler
+%% @doc chlorophytus text page handler
 %% @end
 %%%-------------------------------------------------------------------
--module(chlorophytus_listpage).
+-module(chlorophytus_textpage).
 
 -export([init/2]).
 
@@ -17,10 +17,8 @@
 %% INITIALIZE REST
 init(Req, [State]) ->
     ID = cowboy_req:binding(id, Req),
-    SubID = cowboy_req:binding(sub_id, Req),
     {cowboy_rest, Req,
-     [State#{t0 => chlorophytus_date:now(), id => ID,
-	     sub_id => SubID}]}.
+     [State#{t0 => chlorophytus_date:now(), id => ID}]}.
 
 %% REST CALLBACKS
 allowed_methods(Req, State) ->
@@ -46,6 +44,5 @@ to_text(Req, [#{t0 := T0}] = State) ->
 				      chlorophytus_date:now(), T0),
     T =
 	iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span)),
-    {<<"this lister does nothing. time: ", T/binary,
-       "\r\n">>,
+    {<<"this text does nothing. time: ", T/binary, "\r\n">>,
      Req, State}.

@@ -80,7 +80,7 @@ get_span(unix, D1, D0)
     S0 =
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
-			     calendar:gregorian_secondate_to_datetime(S1 - S0 -
+			     calendar:gregorian_seconds_to_datetime(S1 - S0 -
 									SC),
 			 ms =
 			     D1#chlorophytus_date_t.ms -
@@ -96,7 +96,7 @@ get_span(unix, D1, D0)
     S0 =
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
-			     calendar:gregorian_secondate_to_datetime(S1 - S0 -
+			     calendar:gregorian_seconds_to_datetime(S1 - S0 -
 									SC
 									- 1),
 			 ms =
@@ -112,7 +112,7 @@ get_span(unix, D1, D0) ->
     S0 =
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
-			     calendar:gregorian_secondate_to_datetime(S1 - S0 -
+			     calendar:gregorian_seconds_to_datetime(S1 - S0 -
 									SC),
 			 ms = 0};
 %% Get the span between two points in time and a constant
@@ -124,7 +124,7 @@ get_span(null, D1, D0)
     S0 =
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
-			     calendar:gregorian_secondate_to_datetime(S1 - S0),
+			     calendar:gregorian_seconds_to_datetime(S1 - S0),
 			 ms =
 			     D1#chlorophytus_date_t.ms -
 			       D0#chlorophytus_date_t.ms};
@@ -136,7 +136,7 @@ get_span(null, D1, D0)
     S0 =
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
-			     calendar:gregorian_secondate_to_datetime(S1 - S0 -
+			     calendar:gregorian_seconds_to_datetime(S1 - S0 -
 									1),
 			 ms =
 			     D1#chlorophytus_date_t.ms -
@@ -148,5 +148,5 @@ get_span(null, D1, D0) ->
     S0 =
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
-			     calendar:gregorian_secondate_to_datetime(S1 - S0),
+			     calendar:gregorian_seconds_to_datetime(S1 - S0),
 			 ms = 0}.
