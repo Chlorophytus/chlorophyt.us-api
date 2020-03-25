@@ -9,11 +9,12 @@ deps
 *.plt
 erl_crash.dump
 ebin/*.beam
-rel/chlorophytus_api
+rel/chlorophytus
 .concrete/DEV_MODE
 .rebar
 
 # End of https://www.gitignore.io/api/erlang
 
-# Security
+# Private info for server-side functionality
+docker-compose.yml
 priv
