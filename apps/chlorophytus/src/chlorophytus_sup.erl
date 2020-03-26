@@ -7,14 +7,16 @@
 
 -behaviour(supervisor).
 
--export([start_link/0]).
+-export([start_link/1]).
 
 -export([init/1]).
 
+-export([insert/2]).
+
 -define(SERVER, ?MODULE).
 
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+start_link(Map) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Map]).
 
 %% sup_flags() = #{strategy => strategy(),         % optional
 %%                 intensity => non_neg_integer(), % optional
@@ -25,11 +27,22 @@ start_link() ->
 %%                  shutdown => shutdown(), % optional
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
-init([]) ->
-    SupFlags = #{strategy => one_for_all,
-                 intensity => 0,
-                 period => 1},
-    ChildSpecs = [],
+init([Map]) ->
+    SupFlags = #{strategy => one_for_one, intensity => 0,
+		 period => 2},
+    I = maps:iterator(Map),
+    ChildSpecs = insert(maps:next(I), []),
     {ok, {SupFlags, ChildSpecs}}.
 
-%% internal functions
+%% No need to launch if we don't need to
+insert({K, ignore, I}, Tail) ->
+    error_logger:info_msg("not launching ~p...~n", [K]),
+    insert(maps:next(I), Tail);
+%% Other cases, yes
+insert({K, V, I}, Tail) ->
+    error_logger:info_msg("launching ~p as attr ~p...~n",
+			  [V, K]),
+    insert(maps:next(I), [#{id => K, start => V} | Tail]);
+%% Done iterating
+insert(none, Tail) ->
+    error_logger:info_msg("...launching complete~n"), Tail.
