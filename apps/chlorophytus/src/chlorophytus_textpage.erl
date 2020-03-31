@@ -10,9 +10,9 @@
 
 -export([content_types_provided/2]).
 
--export([to_json/2]).
+-export([options/2]).
 
--export([to_text/2]).
+-export([to_json/2]).
 
 %% INITIALIZE REST
 init(Req, [State]) ->
@@ -22,27 +22,32 @@ init(Req, [State]) ->
 
 %% REST CALLBACKS
 allowed_methods(Req, State) ->
-    {[<<"GET">>], Req, State}.
+    {[<<"GET">>, <<"OPTIONS">>], Req, State}.
 
 content_types_provided(Req, State) ->
-    {[{{<<"text">>, <<"plain">>, '*'}, to_text},
-      {{<<"application">>, <<"json">>, '*'}, to_json}],
-     Req, State}.
+    {[{{<<"application">>, <<"json">>, '*'}, to_json}], Req,
+     State}.
+
+options(Req0, State) ->
+    Req1 =
+	cowboy_req:set_resp_header(<<"access-control-allow-methods">>,
+				   <<"GET, OPTIONS">>, Req0),
+    Req2 =
+	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
+				   <<"*">>, Req1),
+    Req3 =
+	cowboy_req:set_resp_header(<<"access-control-allow-headers">>,
+				   <<"*">>, Req2),
+    {ok, Req3, State}.
 
 %% FINALIZE REST
-to_json(Req, [#{t0 := T0}] = State) ->
+to_json(Req0, [#{t0 := T0}] = State) ->
+    Req1 = cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
+				   <<"https://chlorophyt.us">>, Req0),
     Span = chlorophytus_date:get_span(null,
 				      chlorophytus_date:now(), T0),
     {mochijson2:encode([{<<"text">>,
 			 <<"this does nothing">>},
 			{<<"time">>,
 			 chlorophytus_date:stringify_to_iolist(Span)}]),
-     Req, State}.
-
-to_text(Req, [#{t0 := T0}] = State) ->
-    Span = chlorophytus_date:get_span(null,
-				      chlorophytus_date:now(), T0),
-    T =
-	iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span)),
-    {<<"this text does nothing. time: ", T/binary, "\r\n">>,
-     Req, State}.
+     Req1, State}.
