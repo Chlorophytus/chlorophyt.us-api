@@ -18,7 +18,9 @@ start(_StartType, _StartArgs) ->
 				       [{"/v0_2/list/:id/[:sub_id]",
 					 chlorophytus_listpage, [#{}]},
 					{"/v0_2/text/:id",
-					 chlorophytus_textpage, [#{}]}]}]),
+					 chlorophytus_textpage, [#{}]},
+					{"/v0_2/ping", chlorophytus_ackpage,
+					 [#{}]}]}]),
     % Get IP to connect to, otherwise connecting by localhost is fine
     {ok, [{ip, IP}, {user, User}, {pass, Pass}], _} =
 	file:path_consult([code:priv_dir(chlorophytus)],

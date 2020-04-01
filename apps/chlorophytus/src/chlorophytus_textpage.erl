@@ -41,11 +41,44 @@ options(Req0, State) ->
     {ok, Req3, State}.
 
 %% FINALIZE REST
-to_json(Req0, [#{t0 := T0}] = State) ->
+to_json(Req0, [#{t0 := T0, id := <<"motd">>}] = State) ->
     ok = gen_statem:cast(chlorophytus_asyncdb,
 			 {asyncdb,
 			  #{pid => self(),
 			    req => {load, {motd, most_recent}}}}),
+    Req1 =
+	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
+				   <<"https://chlorophyt.us">>, Req0),
+    {_, _, Vsn} = lists:keyfind(chlorophytus, 1, application:loaded_applications()),
+
+    Response = receive
+		 {ok, {asyncdb, SQL}} ->
+		     {_Rows, [[Title, Text, Date]]} = SQL,
+		     Span = chlorophytus_date:get_span(null,
+						       chlorophytus_date:now(),
+						       T0),
+		     mochijson2:encode([{<<"title">>, Title},
+					{<<"text">>, Text},
+					{<<"date">>, iso8601:format(Date)},
+					{<<"time">>,
+					 iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span))},
+					{<<"version">>, list_to_binary(Vsn)}])
+		 after 1000 ->
+			   Span = chlorophytus_date:get_span(null,
+							     chlorophytus_date:now(),
+							     T0),
+			   mochijson2:encode([{<<"e">>, <<"timed_out">>},
+					      {<<"time">>,
+					       iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span))},
+					      {<<"version">>, list_to_binary(Vsn)}])
+	       end,
+    {Response, Req1, State};
+
+to_json(Req0, [#{t0 := T0, id := <<"side">>}] = State) ->
+    ok = gen_statem:cast(chlorophytus_asyncdb,
+			 {asyncdb,
+			  #{pid => self(),
+			    req => {load, {side, most_recent}}}}),
     Req1 =
 	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
 				   <<"https://chlorophyt.us">>, Req0),
