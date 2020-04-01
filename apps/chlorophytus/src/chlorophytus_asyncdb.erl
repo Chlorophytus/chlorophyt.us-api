@@ -55,14 +55,14 @@ running(internal, pop,
 	  {ok, Cols, Rows} = case R of
 			       {load, {motd, most_recent}} ->
 				   mysql:query(ChC,
-					       <<"SELECT `title`,`text`, MAX(`date_posted`) "
+					       <<"SELECT `title`,`text`, `date_posted` "
 						 "FROM `ChlorophytusSchema`.`BlogTable` "
-						 "WHERE `is_motd` = 1;">>);
+						 "WHERE `is_motd` = 1 ORDER BY `date_posted` DESC LIMIT 1;">>);
 			       {load, {side, most_recent}} ->
 				   mysql:query(ChC,
-					       <<"SELECT `title`,`text`, MAX(`date_posted`) "
+					       <<"SELECT `title`,`text`, `date_posted` "
 						 "FROM `ChlorophytusSchema`.`BlogTable` "
-						 "WHERE `is_motd` = 0;">>)
+						 "WHERE `is_motd` = 0 ORDER BY `date_posted` DESC LIMIT 1;">>)
 			     end,
 	  P ! {ok, {asyncdb, {Cols, Rows}}},
 	  {keep_state,
