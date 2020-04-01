@@ -1,6 +1,6 @@
 {application, chlorophytus,
  [{description, "The Chlorophyt.US backbone"},
-  {vsn, "0.2.1.0"},
+  {vsn, "0.2.1.1"},
   {registered, []},
   {mod, {chlorophytus_app, []}},
   {applications,
