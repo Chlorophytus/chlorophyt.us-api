@@ -15,11 +15,11 @@ start(_StartType, _StartArgs) ->
     {ok, _} = application:ensure_all_started(mysql),
     % Dispatcher
     Dispatch = cowboy_router:compile([{'_',
-				       [{"/v0_2/list/:id/[:sub_id]",
-					 chlorophytus_listpage, [#{}]},
-					{"/v0_2/text/:id",
+				       [{"/v0_3/motd", chlorophytus_motdpage,
+					 [#{}]},
+					{"/v0_3/pages/[:at]",
 					 chlorophytus_textpage, [#{}]},
-					{"/v0_2/ping", chlorophytus_ackpage,
+					{"/v0_3/ping", chlorophytus_ackpage,
 					 [#{}]}]}]),
     % Get IP to connect to, otherwise connecting by localhost is fine
     {ok, [{ip, IP}, {user, User}, {pass, Pass}], _} =

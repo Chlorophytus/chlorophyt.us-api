@@ -27,10 +27,9 @@ start_link(Data) ->
 
 callback_mode() -> state_functions.
 
-init(#{ip := IP, user := User, pass := Pass} =
-	 Data) ->
+init(#{ip := IP, user := User, pass := Pass} = Data) ->
     {ok, MySQL} = mysql:start_link([{host, IP},
-				    {user, User}, {password, Pass}, {database, "ChlorophytusSchema"}]),
+				    {user, User}, {password, Pass}]),
     {ok, idle,
      Data#{mysql => MySQL, q => queue:new(), q_count => 0}}.
 
@@ -43,26 +42,37 @@ idle(cast, {asyncdb, Req}, #{q := Q} = Data) ->
 %% Fulfill state request
 running(cast, {asyncdb, Req},
 	#{q := Q, q_count := QC} = Data)
-    when QC < 16 ->
+    when QC < (?SQL_QUERY_LIMIT) ->
     {keep_state,
      Data#{q => queue:cons(Req, Q), q_count => QC + 1}};
 %% Handling right now...
 running(internal, pop,
-	#{q := Q, q_count := QC, mysql := ChC} = Data) when QC > 0 ->
+	#{q := Q, q_count := QC, mysql := ChC} = Data)
+    when QC > 0 ->
     case queue:daeh(Q) of
       empty -> keep_state_and_data;
       #{pid := P, req := R} ->
 	  {ok, Cols, Rows} = case R of
-			       {load, {motd, most_recent}} ->
+			       {gather, side, [Page]} ->
 				   mysql:query(ChC,
-					       <<"SELECT `title`,`text`, `date_posted` "
-						 "FROM `ChlorophytusSchema`.`BlogTable` "
-						 "WHERE `is_motd` = 1 ORDER BY `date_posted` DESC LIMIT 1;">>);
-			       {load, {side, most_recent}} ->
+					       <<"SELECT `date`,`title`,`text` FROM `ChlorophytusSchem"
+						 "a`.`BlogTableEntries` WHERE `id` > ? "
+						 "ORDER BY `id` DESC LIMIT ?;">>,
+					       [Page * (?SQL_PAGES_LIMIT),
+						?SQL_PAGES_LIMIT]);
+			       {load, motd, []} ->
 				   mysql:query(ChC,
-					       <<"SELECT `title`,`text`, `date_posted` "
-						 "FROM `ChlorophytusSchema`.`BlogTable` "
-						 "WHERE `is_motd` = 0 ORDER BY `date_posted` DESC LIMIT 1;">>)
+					       <<"SELECT `date`,`title`,`text` FROM `Chlorophyt"
+						 "usSchema`.`BlogTableMOTDs` ORDER BY "
+						 "`date` DESC LIMIT 1;">>);
+			       {count, motd, []} ->
+				   mysql:query(ChC,
+					       <<"SELECT COUNT(*) FROM `ChlorophytusSchema`.`Bl"
+						 "ogTableMOTDs`;">>);
+			       {count, side, []} ->
+				   mysql:query(ChC,
+					       <<"SELECT COUNT(*) FROM `ChlorophytusSchema`.`Bl"
+						 "ogTableEntries`;">>)
 			     end,
 	  P ! {ok, {asyncdb, {Cols, Rows}}},
 	  {keep_state,
@@ -70,7 +80,7 @@ running(internal, pop,
 	   {next_event, internal, pop}}
     end;
 running(internal, pop, Data) ->
-        {next_state, idle, Data};
+    {next_state, idle, Data};
 %% Fulfill overloadish state request
 running(cast, {asyncdb, #{pid := P} = Req}, _Data) ->
     error_logger:warning_msg("rejecting request ~p due to overload...~n",

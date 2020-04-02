@@ -44,10 +44,13 @@ to_json(Req0, [#{t0 := T0}] = State) ->
     Req1 =
 	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
 				   <<"https://chlorophyt.us">>, Req0),
+    {_, _, Vsn} = lists:keyfind(chlorophytus, 1,
+				application:loaded_applications()),
     Span = chlorophytus_date:get_span(null,
 				      chlorophytus_date:now(), T0),
     T =
 	iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span)),
-    {mochijson2:encode([{<<"pong">>, true},
+    {mochijson2:encode([{<<"version">>,
+			 list_to_binary(Vsn)},
 			{<<"time">>, T}]),
      Req1, State}.
