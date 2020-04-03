@@ -28,8 +28,8 @@ start_link(Map) ->
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
 init([Map]) ->
-    SupFlags = #{strategy => one_for_one, intensity => 0,
-		 period => 2},
+    SupFlags = #{strategy => one_for_all, intensity => 2,
+		 period => 3},
     I = maps:iterator(Map),
     ChildSpecs = insert(maps:next(I), []),
     {ok, {SupFlags, ChildSpecs}}.
