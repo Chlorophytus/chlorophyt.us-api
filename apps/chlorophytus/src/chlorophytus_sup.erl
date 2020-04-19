@@ -11,6 +11,8 @@
 
 -export([init/1]).
 
+-export([ensure_lastly/0]).
+
 -export([insert/2]).
 
 -define(SERVER, ?MODULE).
@@ -28,7 +30,7 @@ start_link(Map) ->
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
 init([Map]) ->
-    SupFlags = #{strategy => one_for_all, intensity => 2,
+    SupFlags = #{strategy => one_for_one, intensity => 2,
 		 period => 3},
     I = maps:iterator(Map),
     ChildSpecs = insert(maps:next(I), []),
@@ -46,3 +48,19 @@ insert({K, V, I}, Tail) ->
 %% Done iterating
 insert(none, Tail) ->
     error_logger:info_msg("...launching complete~n"), Tail.
+
+ensure_lastly() ->
+    % add in these after everything's been done.
+    Dispatch = cowboy_router:compile([{'_',
+				       [{"/v0_3/motd", chlorophytus_motdpage,
+					 [#{}]},
+					{"/v0_3/pages/[:at]",
+					 chlorophytus_textpage, [#{}]},
+					{"/v0_3/ping", chlorophytus_ackpage,
+					 [#{}]}]}]),
+    supervisor:start_child(chlorophytus_sup,
+			 #{id => tail_cowboy,
+			   start =>
+			       {cowboy, start_clear,
+				[http, [{port, 8080}],
+				 #{env => #{dispatch => Dispatch}}]}}).
