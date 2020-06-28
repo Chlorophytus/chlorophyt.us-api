@@ -1,15 +1,16 @@
 %%%-------------------------------------------------------------------
 %% @doc chlorophytus date system
 %%
+%% 		ready for v0.4
+%%
 %%      this was from another personal site I was working on in the
 %%      past
 %%
 %%		the licenses are compatible
+%%
 %% @end
 %%%-------------------------------------------------------------------
 -module(chlorophytus_date).
-
--include("chlorophytus.hrl").
 
 -export([now/0]).
 
@@ -18,6 +19,8 @@
 -export([encode/2]).
 
 -export([get_span/3]).
+
+-include("chlorophytus.hrl").
 
 %% Get the current time.
 now() ->
@@ -84,7 +87,7 @@ get_span(unix, D1, D0)
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
 			     calendar:gregorian_seconds_to_datetime(S1 - S0 -
-									SC),
+								      SC),
 			 ms =
 			     D1#chlorophytus_date_t.ms -
 			       D0#chlorophytus_date_t.ms};
@@ -99,9 +102,8 @@ get_span(unix, D1, D0)
     S0 =
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
-			     calendar:gregorian_seconds_to_datetime(S1 - S0 -
-									SC
-									- 1),
+			     calendar:gregorian_seconds_to_datetime(S1 - S0 - SC
+								      - 1),
 			 ms =
 			     D1#chlorophytus_date_t.ms -
 			       D0#chlorophytus_date_t.ms
@@ -116,7 +118,7 @@ get_span(unix, D1, D0) ->
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
 			     calendar:gregorian_seconds_to_datetime(S1 - S0 -
-									SC),
+								      SC),
 			 ms = 0};
 %% Get the span between two points in time and a constant
 get_span(null, D1, D0)
@@ -140,7 +142,7 @@ get_span(null, D1, D0)
 	calendar:datetime_to_gregorian_seconds(D0#chlorophytus_date_t.dt),
     #chlorophytus_date_t{dt =
 			     calendar:gregorian_seconds_to_datetime(S1 - S0 -
-									1),
+								      1),
 			 ms =
 			     D1#chlorophytus_date_t.ms -
 			       D0#chlorophytus_date_t.ms

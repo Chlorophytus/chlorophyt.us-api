@@ -1,5 +1,8 @@
 %%%-------------------------------------------------------------------
 %% @doc chlorophytus AWS Health Check page handler
+%%
+%% 		ready for v0.4
+%%
 %% @end
 %%%-------------------------------------------------------------------
 -module(chlorophytus_ackpage).
@@ -13,6 +16,8 @@
 -export([options/2]).
 
 -export([to_json/2]).
+
+-include("chlorophytus.hrl").
 
 %% INITIALIZE REST
 init(Req, [State]) ->
@@ -52,5 +57,5 @@ to_json(Req0, [#{t0 := T0}] = State) ->
 	iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span)),
     {mochijson2:encode([{<<"version">>,
 			 list_to_binary(Vsn)},
-			{<<"time">>, T}]),
+			{<<"latency">>, T}]),
      Req1, State}.

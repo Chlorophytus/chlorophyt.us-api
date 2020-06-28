@@ -52,15 +52,18 @@ insert(none, Tail) ->
 ensure_lastly() ->
     % add in these after everything's been done.
     Dispatch = cowboy_router:compile([{'_',
-				       [{"/v0_3/motd", chlorophytus_motdpage,
+				       [% Version 0.4 endpoint mappings
+					{"/v0_4/ping", chlorophytus_ackpage,
 					 [#{}]},
-					{"/v0_3/pages/[:at]",
-					 chlorophytus_textpage, [#{}]},
-					{"/v0_3/ping", chlorophytus_ackpage,
-					 [#{}]}]}]),
+					{"/v0_4/folio/[:at]",
+					 chlorophytus_foliopage, [#{}]},
+					{"/v0_4/blog/[:at]",
+					 chlorophytus_blogpage, [#{}]},
+					{"/v0_4/motd/[:at]",
+					 chlorophytus_motdpage, [#{}]}]}]),
     supervisor:start_child(chlorophytus_sup,
-			 #{id => tail_cowboy,
-			   start =>
-			       {cowboy, start_clear,
-				[http, [{port, 8080}],
-				 #{env => #{dispatch => Dispatch}}]}}).
+			   #{id => tail_cowboy,
+			     start =>
+				 {cowboy, start_clear,
+				  [http, [{port, 8080}],
+				   #{env => #{dispatch => Dispatch}}]}}).

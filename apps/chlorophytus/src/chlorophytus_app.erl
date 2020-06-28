@@ -1,5 +1,8 @@
 %%%-------------------------------------------------------------------
 %% @doc chlorophytus public API
+%%
+%% 		ready for v0.4
+%%
 %% @end
 %%%-------------------------------------------------------------------
 
@@ -19,7 +22,7 @@ start(_StartType, _StartArgs) ->
     chlorophytus_sup:start_link(#{argv_websup =>
 				      {chlorophytus_web_sup, start_link, []},
 				  argv_asyncdb =>
-				      {chlorophytus_asyncdb, start_link,
+				      {chlorophytus_asyncdb2, start_link,
 				       [#{ip => IP, user => User,
 					  pass => Pass}]}}),
     chlorophytus_sup:ensure_lastly().

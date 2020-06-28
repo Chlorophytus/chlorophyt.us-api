@@ -1,11 +1,11 @@
 %%%-------------------------------------------------------------------
-%% @doc chlorophytus MOTD page handler
+%% @doc chlorophytus portfolio page handler
 %%
 %% 		ready for v0.4
 %%
 %% @end
 %%%-------------------------------------------------------------------
--module(chlorophytus_motdpage).
+-module(chlorophytus_foliopage).
 
 -export([init/2]).
 
@@ -53,17 +53,19 @@ gather([InHead | InTail], OutTail) when InHead =:= [] ->
 
 gather([InHead | InTail], OutTail) ->
     OutHead = [{<<"date">>,
-		iso8601:format(InHead#chlorophytus_entry_t.date)},
-	       {<<"title">>, InHead#chlorophytus_entry_t.title},
+		iso8601:format(InHead#chlorophytus_folio_t.date)},
+	       {<<"title">>, InHead#chlorophytus_folio_t.title},
 	       {<<"description">>,
-		InHead#chlorophytus_entry_t.description}],
+		InHead#chlorophytus_folio_t.description},
+		{<<"link">>, InHead#chlorophytus_folio_t.link},
+		{<<"image">>, InHead#chlorophytus_folio_t.image}],
     gather(InTail, [OutHead | OutTail]);
 gather([], Out) -> Out.
 
 %% FINALIZE REST
 to_json(Req0, [#{t0 := T0, id := undefined}] = State) ->
     ok = gen_statem:cast(chlorophytus_asyncdb2,
-			 {asyncdb2, #{pid => self(), req => {count, motd}}}),
+			 {asyncdb2, #{pid => self(), req => {count, folio}}}),
     Req1 =
 	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
 				   <<"https://chlorophyt.us">>, Req0),
@@ -90,12 +92,12 @@ to_json(Req0, [#{t0 := T0, id := undefined}] = State) ->
 	       end,
     {Response, Req1, State};
 to_json(Req0, [#{t0 := T0, id := RawID}] = State) ->
-    ID = binary_to_integer(RawID),
+	ID = binary_to_integer(RawID),
     Entries = lists:seq(ID * (?SQL_QUERIES_PER_PAGE),
 			((ID + 1) * (?SQL_QUERIES_PER_PAGE) - 1)),
     ok = gen_statem:cast(chlorophytus_asyncdb2,
 			 {asyncdb2,
-			  #{pid => self(), req => {get, motd, Entries}}}),
+			  #{pid => self(), req => {get, folio, Entries}}}),
     Req1 =
 	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
 				   <<"https://chlorophyt.us">>, Req0),

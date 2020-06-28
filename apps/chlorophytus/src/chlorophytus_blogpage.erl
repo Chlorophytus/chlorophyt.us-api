@@ -1,8 +1,11 @@
 %%%-------------------------------------------------------------------
-%% @doc chlorophytus text page handler
+%% @doc chlorophytus blog page handler
+%%
+%% 		ready for v0.4
+%%
 %% @end
 %%%-------------------------------------------------------------------
--module(chlorophytus_textpage).
+-module(chlorophytus_blogpage).
 
 -export([init/2]).
 
@@ -13,6 +16,8 @@
 -export([options/2]).
 
 -export([to_json/2]).
+
+-include("chlorophytus.hrl").
 
 %% INITIALIZE REST
 init(Req, [State]) ->
@@ -34,36 +39,42 @@ options(Req0, State) ->
 				   <<"GET, OPTIONS">>, Req0),
     Req2 =
 	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
-				   <<"*">>, Req1),
+				   <<"https://chlorophyt.us">>, Req1),
     Req3 =
 	cowboy_req:set_resp_header(<<"access-control-allow-headers">>,
-				   <<"https://chlorophyt.us">>, Req2),
+				   <<"*">>, Req2),
     {ok, Req3, State}.
 
-%% PAGINATEISH
-paginate([[Date, Title, Text] | Data], JSON) ->
-    paginate(Data,
-	     [{[{<<"date">>, iso8601:format(Date)},
-		{<<"title">>, Title}, {<<"text">>, Text}]}
-	      | JSON]);
-paginate([], JSON) -> lists:reverse(JSON).
+%% GATHER LIST ENTRIES
+gather(In) -> gather(In, []).
+
+gather([InHead | InTail], OutTail) when InHead =:= [] ->
+    gather(InTail, OutTail);
+
+gather([InHead | InTail], OutTail) ->
+    OutHead = [{<<"date">>,
+		iso8601:format(InHead#chlorophytus_entry_t.date)},
+	       {<<"title">>, InHead#chlorophytus_entry_t.title},
+	       {<<"description">>,
+		InHead#chlorophytus_entry_t.description}],
+    gather(InTail, [OutHead | OutTail]);
+gather([], Out) -> Out.
 
 %% FINALIZE REST
 to_json(Req0, [#{t0 := T0, id := undefined}] = State) ->
-    ok = gen_statem:cast(chlorophytus_asyncdb,
-			 {asyncdb, #{pid => self(), req => {count, side, []}}}),
+    ok = gen_statem:cast(chlorophytus_asyncdb2,
+			 {asyncdb2, #{pid => self(), req => {count, blog}}}),
     Req1 =
 	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
 				   <<"https://chlorophyt.us">>, Req0),
     {_, _, Vsn} = lists:keyfind(chlorophytus, 1,
 				application:loaded_applications()),
     Response = receive
-		 {ok, {asyncdb, SQL}} ->
-		     {_Rows, [[Count]]} = SQL,
+		 {ok, {asyncdb2, Count}} ->
 		     Span = chlorophytus_date:get_span(null,
 						       chlorophytus_date:now(),
 						       T0),
-		     mochijson2:encode([{<<"time">>,
+		     mochijson2:encode([{<<"latency">>,
 					 iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span))},
 					{<<"version">>, list_to_binary(Vsn)},
 					{<<"count">>, Count}])
@@ -72,37 +83,40 @@ to_json(Req0, [#{t0 := T0, id := undefined}] = State) ->
 							     chlorophytus_date:now(),
 							     T0),
 			   mochijson2:encode([{<<"e">>, <<"timed_out">>},
-					      {<<"time">>,
+					      {<<"latency">>,
 					       iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span))},
 					      {<<"version">>,
 					       list_to_binary(Vsn)}])
 	       end,
     {Response, Req1, State};
-to_json(Req0, [#{t0 := T0, id := ID}] = State) ->
-    ok = gen_statem:cast(chlorophytus_asyncdb,
-			 {asyncdb,
-			  #{pid => self(), req => {gather, side, [binary_to_integer(ID)]}}}),
+to_json(Req0, [#{t0 := T0, id := RawID}] = State) ->
+    ID = binary_to_integer(RawID),
+    Entries = lists:seq(ID * (?SQL_QUERIES_PER_PAGE),
+			((ID + 1) * (?SQL_QUERIES_PER_PAGE) - 1)),
+    ok = gen_statem:cast(chlorophytus_asyncdb2,
+			 {asyncdb2,
+			  #{pid => self(), req => {get, blog, Entries}}}),
     Req1 =
 	cowboy_req:set_resp_header(<<"access-control-allow-origin">>,
 				   <<"https://chlorophyt.us">>, Req0),
     {_, _, Vsn} = lists:keyfind(chlorophytus, 1,
 				application:loaded_applications()),
     Response = receive
-		 {ok, {asyncdb, SQL}} ->
-		     {_Rows, Data} = SQL,
+		 {ok, {asyncdb2, Records}} ->
+		     Gathered = gather(Records),
 		     Span = chlorophytus_date:get_span(null,
 						       chlorophytus_date:now(),
 						       T0),
-		     mochijson2:encode([{<<"time">>,
+		     mochijson2:encode([{<<"latency">>,
 					 iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span))},
 					{<<"version">>, list_to_binary(Vsn)},
-					{<<"data">>, paginate(Data, [])}])
+					{<<"data">>, Gathered}])
 		 after 1000 ->
 			   Span = chlorophytus_date:get_span(null,
 							     chlorophytus_date:now(),
 							     T0),
 			   mochijson2:encode([{<<"e">>, <<"timed_out">>},
-					      {<<"time">>,
+					      {<<"latency">>,
 					       iolist_to_binary(chlorophytus_date:stringify_to_iolist(Span))},
 					      {<<"version">>,
 					       list_to_binary(Vsn)}])
